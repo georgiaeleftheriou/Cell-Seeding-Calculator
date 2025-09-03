@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cell Plating Calculator</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  label { display: block; margin-top: 10px; font-weight: bold; }
+  input, select, textarea { padding: 5px; width: 100%; box-sizing: border-box; margin-top: 5px; font-family: Arial, sans-serif; font-size: 14px; }
+  textarea { height: 100px; resize: vertical; }
+  fieldset { border: 1px solid #ccc; padding: 15px; margin-top: 20px; }
+  legend { font-weight: bold; padding: 0 10px; }
+  .result { margin-top: 15px; font-weight: bold; color: darkblue; }
+</style>
+</head>
+<body>
+
+<h2>Cell Plating Calculator</h2>
+
+<label for="experimentType">Experiment Type:</label>
+<select id="experimentType" onchange="calculate()">
+  <option value="">-- Select Experiment Type --</option>
+  <option value="Cortical">Cortical</option>
+  <option value="Microglia">Microglia</option>
+  <option value="Astrocyte">Astrocyte</option>
+  <option value="Other">Other</option>
+</select>
+
+<label for="cellLine">Cell Line:</label>
+<input id="cellLine" placeholder="e.g. iPSC-1234" type="text" oninput="calculate()" />
+
+<label for="plateType">Plate Type:</label>
+<select id="plateType" onchange="calculate()">
+  <option value="6">6-well</option>
+  <option value="12">12-well</option>
+  <option value="24">24-well</option>
+  <option value="48">48-well</option>
+  <option value="96">96-well</option>
+</select>
+
+<fieldset>
+  <legend>Current Suspension</legend>
+  <label for="cellCount">Total Cells (10⁶):</label>
+  <input id="cellCount" placeholder="e.g. 1.2 for 1.2 × 10⁶ cells" step="0.01" type="number" oninput="calculate()" />
+
+  <label for="volume">Current Volume (mL):</label>
+  <input id="volume" placeholder="e.g. 2.5" step="0.01" type="number" oninput="calculate()" />
+</fieldset>
+
+<fieldset>
+  <legend>Desired Plating Parameters</legend>
+  <label for="cellsPerWell">Desired Cells per Well (10⁶):</label>
+  <input id="cellsPerWell" placeholder="e.g. 0.1 for 0.1 × 10⁶ cells" step="0.01" type="number" oninput="calculate()" />
+
+  <label for="volumePerWell">Desired Volume per Well (mL):</label>
+  <input id="volumePerWell" placeholder="e.g. 0.2" step="0.01" type="number" oninput="calculate()" />
+</fieldset>
+
+<div class="result" id="output">&nbsp;</div>
+
+<label for="comments">Comments:</label>
+<textarea id="comments" placeholder="Enter any notes or observations here..."></textarea>
+
+<script>
+  function calculate() {
+    const cellCountMillion = parseFloat(document.getElementById('cellCount').value);
+    const volume = parseFloat(document.getElementById('volume').value);
+    const cellsPerWellMillion = parseFloat(document.getElementById('cellsPerWell').value);
+    const volumePerWell = parseFloat(document.getElementById('volumePerWell').value);
+    const experimentType = document.getElementById('experimentType').value;
+
+    const output = document.getElementById('output');
+
+    if (!isNaN(cellCountMillion) && cellCountMillion > 0) {
+      const totalCells = cellCountMillion * 1e6;
+      let resultHTML = `
+        <p><strong>Experiment Type:</strong> ${experimentType || 'Not selected'}</p>
+        <p><strong>Total Cells:</strong> ${totalCells.toLocaleString()}</p>
+      `;
+
+      if (!isNaN(volume) && volume > 0) {
+        const concentration = totalCells / volume;
+        resultHTML += `<p><strong>Current Concentration:</strong> ${Math.round(concentration).toLocaleString()} cells/mL</p>`;
+      }
+
+      if (!isNaN(cellsPerWellMillion) && cellsPerWellMillion > 0) {
+        const cellsPerWell = cellsPerWellMillion * 1e6;
+        const wellsPossible = Math.floor(totalCells / cellsPerWell);
+
+        resultHTML += `
+          <p>Desired Cells per Well: <strong>${cellsPerWell.toLocaleString()}</strong></p>
+          <p>You can plate <strong>${wellsPossible}</strong> wells at that density.</p>
+        `;
+
+        if (!isNaN(volumePerWell) && volumePerWell > 0) {
+          const requiredVolume = wellsPossible * volumePerWell;
+          const requiredConcentration = cellsPerWell / volumePerWell;
+
+          resultHTML += `
+            <p>Desired Volume per Well: <strong>${volumePerWell} mL</strong></p>
+            <p><strong>To achieve this, resuspend your cells in: ${requiredVolume.toFixed(2)} mL</strong></p>
+            <p>Target Concentration: <strong>${Math.round(requiredConcentration).toLocaleString()} cells/mL</strong></p>
+          `;
+        }
+      }
+
+      output.innerHTML = resultHTML;
+    } else {
+      output.innerHTML = '';
+    }
+  }
+
+  // Initialize
+  calculate();
+</script>
+
+</body>
+</html>
